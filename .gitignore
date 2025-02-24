@@ -398,3 +398,18 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Ignore appsettings files
+InsightCore/InsightCore/appsettings.json
+InsightCore/InsightCore/appsettings.Development.json
+
+# Ignore build directories
+InsightCore/InsightCore/bin/
+InsightCore/InsightCore/obj/
+
+# Ignore Visual Studio specific files
+.vscode/
+*.user
+*.suo
+*.csproj.user
+*.vs/

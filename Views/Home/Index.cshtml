@@ -1,0 +1,417 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div id="app">
+
+    <!-- Modals -->
+    <div class="modal fade" tabindex="-1" role="dialog" id="modal-stats">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content" v-if="statsModal.stats != null">
+                <div class="modal-header">
+                    <h5 class="modal-title">Stats for {{statsModal.field}}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="$('#modal-stats').modal('toggle');">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark" style="font-size: 14px">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Top 10 Values</th>
+                                    <th scope="col">Count</th>
+                                    <th scope="col">%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(stat, index) in statsModal.stats">
+                                    <td>{{trim(32, stat.value)}}</td>
+                                    <td>{{stat.count}}</td>
+                                    <td>{{stat.percentage}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Side Bar -->
+    <div class="sidebar">
+        <div style="display: flex ; flex-direction: column; font-size: 12px; color: white">
+            <div class="logo" style="width: 100%;">
+                <div class="scene" style="height: 150px; width: 150px;">
+                    <div class="cube-wrapper">
+                        <div class="cube">
+                            <div class="cube-faces">
+                                <div class="cube-face bottom"></div>
+                                <div class="cube-face top"><span style="z-index: 99"></span></div>
+                                <div class="cube-face left"></div>
+                                <div class="cube-face right"></div>
+                                <div class="cube-face back"></div>
+                                <div class="cube-face front"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <a :href="navItem.href" v-for="(navItem, index) in navigation.menuItems" class="menu-item" @@click="navigation.activeItem = index" :class="getNavigationClass(index)"><span v-html='navItem.icon'></span> {{navItem.name}}</a>
+
+            <transition name="fade">
+                <div class="fields-container" v-if="navigation.activeItem == 1 && getFields.length > 0">
+                    <h6 style="font-weight: 300"><i class="fa-solid fa-file-invoice"></i> Fields</h6>
+                    <hr />
+                    <div>
+                        <div v-for="field in getFields" style="cursor: pointer;">
+                            <a @@click="showStats(field)"><strong style="color: #fb623a; padding-top: 5px; padding-bottom: 5px">{{field}}</strong></a>
+                        </div>
+                    </div>
+
+                    <hr />
+                </div>
+
+            </transition>
+        </div>
+    </div>
+
+    <!-- Inner Content -->
+    <div class="content">
+        <div style="padding-bottom: 25px; display: flex; flex-direction:column">
+            <span style="font-size: 70px; " class="app-name">Insight<span style="font-weight:300">Core</span></span>
+            <span>The open source W3C log analyzer and real-time monitoring tool.</span>
+        </div>
+
+        <!-- Pages -->
+        <div>
+            <!-- Home -->
+            <div v-if="navigation.activeItem == 0" class="search-container">
+                <div>
+                    <h2>Health</h2>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div v-else-if="navigation.activeItem == 1" class="search-container">
+                <div class="search-param">
+                    <textarea spellcheck="false" v-model="query" type="text" style="flex: 1; min-height: 40px; height: 40px; " @@keydown="onSearchKeyDown"></textarea>
+                    <button class="custom-button" @@click="search()" style="flex: 1; max-width: 100px; max-height: 40px;"><i class="fa-brands fa-searchengin"></i> Search</button>
+                </div>
+
+                <div class="search-results-heading">
+                    <span>{{getSearchResultsText.resultCount}}</span>
+                    <span>{{getSearchResultsText.paginationText}}</span>
+                </div>
+
+                <transition name="fade">
+                    <div v-if="getFilteredLogs.length > 0">
+                        <hr />
+
+                        <span>Visuals</span>
+                        <div style="display: flex; justify-content: flex-start; gap: 10px; padding: 5px;">
+                            <div style="background: #171717; padding: 5px; border-radius: 5px; border: 1px solid #47444e;">
+                                <i class="fa-solid fa-chart-line fa-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
+                <hr />
+
+                <transition name="fade">
+                    <div v-if="isSearching">
+
+                        <div style="display: flex; justify-content: center; align-items: center; flex-direction: column">
+                            <h6>Loading...</h6>
+                            <div class="scene">
+                                <div class="cube-wrapper-animated">
+                                    <div class="cube-animated">
+                                        <div class="cube-faces">
+                                            <div class="cube-face shadow"></div>
+                                            <div class="cube-face bottom"></div>
+                                            <div class="cube-face top">  <span style="z-index: 99"></span></div>
+                                            <div class="cube-face left"></div>
+                                            <div class="cube-face right"></div>
+                                            <div class="cube-face back"></div>
+                                            <div class="cube-face front"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <template v-else>
+                        <div class="search-results" v-if="getFilteredLogs.length > 0">
+                            <div class="log-line-container" v-for="(logLine, index) in getFilteredLogs"
+                                 :style="index % 2 == 0 ? 'background: #473c5a;' : ''">
+
+                                <div class="log-line">
+                                    <div style="display: flex ; justify-content: flex-start; gap: 10px; padding-bottom: 10px;">
+                                        <span style=" cursor: pointer;background-color: rgba(255, 20, 20, 0.2); background-image: linear-gradient(90deg, rgb(252, 99, 55), rgb(197, 22, 225)); width: 20px; height: 20px; display: flex ; align-items: center; justify-content: center; border-radius: 4px; color: #473c5a; box-shadow: 1px 1px 3px 0px #171717;"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></span>
+                                        <span style="font-weight: bold; color: white">({{index}}) {{logLine.timeStamp}}</span>
+                                        <template v-if="logLine.hasAnomaly">
+
+                                            <span>
+                                                <i style="color: yellow; font-size: 16px;" class="fa-solid fa-triangle-exclamation"></i> Anomaly Detected
+                                            </span>
+                                        </template>
+                                    </div>
+                                    <div style="word-break: break-all;">
+                                        <div v-html="getHighlightedText(logLine.raw)"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </transition>
+
+
+
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    $(document).ready(function() {
+
+        app = new Vue({
+            el: "#app",
+            data: {
+                navigation: {
+                    menuItems: [{
+                            name: 'Home',
+                            href: '#home',
+                            icon: '<i class="fa-solid fa-house-medical-flag"></i>'
+                        },
+                        {
+                            name: 'Search',
+                            href: '#search',
+                            icon: '<i class="fa-brands fa-searchengin"></i>'
+                        }
+                    ],
+                    activeItem: 1,
+                },
+                pagination: {
+                    currentPage: 0,
+                    pages: 1,
+                },
+                query: '',
+                logs: [],
+                fields: [],
+                anomalies: [],
+                searching: false,
+                highlightedResults: '',
+                statsModal: {
+                    field: '',
+                    stats: null,
+                },
+                pageSize: 100,
+            },
+
+            computed: {
+
+                getAnomalies: function() {
+                    return this.anomalies == null ? [] : this.anomalies;
+                },
+
+                getStatsModal: function() {
+                    return this.statsModal;
+                },
+
+                isSearching: function() {
+                    return this.searching;
+                },
+
+                getSearchResultsText: function() {
+
+                    let start = this.pagination.currentPage + 1;
+                    let end = (this.getFilteredLogs.length > this.pageSize) ? Math.round((this.getFilteredLogs.length / this.pageSize)) : "1"
+                    let timeText = "all time."
+                    let response = {
+                        paginationText: start + " of " + end,
+                        resultCount: this.getRawLogs.length + " results from " + timeText,
+                    }
+
+                    return response;
+                },
+
+                getPageName: function() {
+                    return this.navigation.menuItems[this.navigation.activeItem].name ?? "Home"
+                },
+
+                getRawLogs: function() {
+                    return this.logs;
+                },
+
+                getFilteredLogs: function() {
+                    const pageSize = this.pageSize;
+                    const currentPage = this.pagination.currentPage;
+                    const totalLogs = this.logs.length;
+
+                    const startIndex = currentPage * pageSize;
+                    const endIndex = Math.min(startIndex + pageSize, totalLogs);
+
+                    return this.logs.slice(startIndex, endIndex);
+                },
+
+                getFields: function() {
+                    return this.fields;
+                },
+            },
+
+            methods: {
+
+                trim: function(limit, text) {
+                    return text.length >= limit ?
+                        text = text.substr(0, limit) + "[...]" : text;
+                },
+
+                getLogsByField: function(field) {
+                    let fieldAndValues = this.logs.map(function(line) {
+                        return line.logItems.filter(x => x.field == field);
+                    });
+
+                    return fieldAndValues;
+                },
+
+                showStats: function(field) {
+
+                    $('#modal-stats').modal('toggle');
+
+                    const logs = this.getLogsByField(field).flat();
+
+                    const counts = logs.reduce((acc, {
+                        value
+                    }) => {
+                        acc[value] = (acc[value] || 0) + 1;
+                        return acc;
+                    }, {});
+
+                    const totalLogs = logs.length;
+                    const topTenValues = Object.entries(counts)
+                        .map(([value, count], index) => ({
+                            index: index + 1,
+                            value,
+                            count,
+                            percentage: ((count / totalLogs) * 100).toFixed(2) + '%'
+                        }))
+                        .sort((a, b) => b.count - a.count)
+                        .slice(0, 10);
+
+
+                    const result = {
+                        name: field,
+                        topTenValues
+                    };
+
+                    this.statsModal.field = result.name;
+                    this.statsModal.stats = result.topTenValues;
+                },
+
+                getHighlightedText(logText) {
+
+                    if (!this.highlightedResults)
+                        return logText;
+
+                    let queryString = this.highlightedResults;
+                    const pipeIndex = queryString.indexOf('|');
+                    if (pipeIndex !== -1) {
+                        queryString = queryString.slice(0, pipeIndex).trim();
+                    } else {
+                        queryString = queryString.trim();
+                    }
+
+                    if (!queryString) return logText;
+
+                    const tokens = queryString.split(/\s+/).filter(token => token);
+
+                    const terms = tokens.reduce((acc, token) => {
+                        if (token.includes('=')) {
+                            const [key, ...valueParts] = token.split('=');
+                            // Ignore tokens that start with "index="
+                            if (key.toLowerCase() === 'index') {
+                                return acc;
+                            }
+                            const value = valueParts.join('=');
+                            if (value) acc.push(value);
+                        } else {
+                            acc.push(token);
+                        }
+                        return acc;
+                    }, []);
+
+                    if (!terms.length) return logText;
+
+
+                    const escapedTerms = terms.map(term =>
+                        term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                    );
+
+
+                    const regex = new RegExp(`(${escapedTerms.join('|')})`, 'gi');
+
+
+                    return logText.replace(regex, '<span class="highlighted">$1</span>');
+                },
+
+
+
+
+                search: async function() {
+
+                    this.searching = true;
+
+                    let request = {
+                        query: this.query,
+                    }
+
+                    let that = this;
+
+                    var x = await $.ajax({
+                        url: '/home/search',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: request,
+                        success: function(params) {
+                            that.logs = params.logLines;
+                            that.fields = params.uniqueFields;
+                            that.highlightedResults = request.query;
+                            that.anomalies = params.anomalies;
+                        },
+                        error: function(params) {
+                            console.log(params)
+                        }
+                    });
+
+
+                    that.searching = false;
+
+                },
+
+                getNavigationClass: function(index) {
+
+                    return this.navigation.activeItem == index ? "active" : "not-active"
+
+                },
+
+                onSearchKeyDown: function(e) {
+
+                    if (e.which === 13 && !e.shiftKey) {
+                        e.preventDefault();
+                        this.search();
+                    }
+                },
+            },
+            mounted: function() {
+
+            }
+        });
+
+    });
+</script>

@@ -12,3 +12,4 @@ InsightCore/InsightCore/obj/
 *.suo
 *.csproj.user
 *.vs/
+/bin

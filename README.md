@@ -1,8 +1,9 @@
 # InsightCore
 
 <p align="center">
-  <img src="https://i.gyazo.com/ac5af4a98490076982502bba2f9a6275.png" width="45%" />
-  <img src="https://i.gyazo.com/09600cf2e1a06b43ebc4f0ba016baac4.png" width="45%" />
+  <img src="https://i.gyazo.com/ac5af4a98490076982502bba2f9a6275.png" width="33%" />
+  <img src="https://i.gyazo.com/09600cf2e1a06b43ebc4f0ba016baac4.png" width="33%" />
+  <img src="https://i.gyazo.com/ff087c83ba3b1326bd37ce595f2174fa.png" width="33%" />
 </p>
 
 
@@ -30,11 +31,22 @@ With an intuitive web-based UI, InsightCore allows developers and administrators
 
 ## Query Language
 InsightCore includes a query language for log analysis. Some examples:
-- **Retrieve the last 10 ping requests:**
+- **Isolate to specific Uris**
   ```
-  index=iis ping | order desc | take 10
+  index=iis cs-uri-stem=/app/v1/ping
   ```
-
+- **Get the last 10 requests using pipe keywords**
+  ```
+  index=iis cs-uri-stem=/app/v1/ping | order desc | take 10
+  ```
+- **Loose definition detection**
+  ```
+  index=iis /app/v1/ping myusername 
+  ```
+- **Strict definition detection**
+  ```
+  index=iis cs-uri-stem=/app/v1/ping cs-username=myusername 
+  ```
 ## Contributing
 Contributions are welcome! Feel free to submit issues, feature requests, or pull requests.
 

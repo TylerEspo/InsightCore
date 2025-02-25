@@ -7,9 +7,15 @@
         /// Such as the raw input, timeframe and index of the search that will be passed to the engine.
         /// </summary>
         /// <param name="input"></param>
-        public LogSearch(string input)
+        public LogSearch(string? input, bool complexMode = false)
         {
             Query = new Query(input);
+            this.ComplexMode = complexMode;
+        }
+
+        public LogSearch()
+        {
+            Query = new Query(string.Empty);
         }
 
         /// <summary>
@@ -32,7 +38,7 @@
         /// </summary>
         public DateTime? End { get; set; }
 
-        public SearchMode SearchType { get; set; } = SearchMode.Normal;
+        public bool ComplexMode { get; set; } = false;
 
         /// <summary>
         /// Selected index for search 

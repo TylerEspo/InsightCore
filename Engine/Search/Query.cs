@@ -8,7 +8,7 @@ namespace InsightCore.Engine.Search
         /// Query constructed from raw input containing variations of parameters used for searching.
         /// </summary>
         /// <param name="input"></param>
-        public Query(string input)
+        public Query(string? input)
         {
             Input = input;
         }
@@ -36,6 +36,9 @@ namespace InsightCore.Engine.Search
         {
             get
             {
+                if (string.IsNullOrEmpty(this.Input))
+                    return string.Empty;
+
                 // index=iis
                 // Key=Value
                 string[] queryParams = Parameters;
@@ -59,6 +62,8 @@ namespace InsightCore.Engine.Search
         {
             get
             {
+                if (string.IsNullOrEmpty(this.Input))
+                    return string.Empty;
 
                 // index=iis
                 // Key=Value

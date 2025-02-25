@@ -101,6 +101,13 @@
                     <button class="custom-button" @@click="search()" style="flex: 1; max-width: 100px; max-height: 40px;"><i class="fa-brands fa-searchengin"></i> Search</button>
                 </div>
 
+                <div style="padding-top: 5px; padding-bottom: 10px;">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="searchMode" v-model="searchMode">
+                        <label style="font-size: 14px" class="form-check-label" for="searchMode"><i style="color: #fb6239" class="fa-solid fa-circle-nodes"></i> Complex Search Mode</label>
+                    </div>
+                </div>
+
                 <div class="search-results-heading">
                     <span>{{getSearchResultsText.resultCount}}</span>
                     <span>{{getSearchResultsText.paginationText}}</span>
@@ -183,6 +190,8 @@
         app = new Vue({
             el: "#app",
             data: {
+                searchMode: false,
+                processingTime: 0,
                 navigation: {
                     menuItems: [{
                             name: 'Home',
@@ -230,9 +239,17 @@
 
                 getSearchResultsText: function() {
 
+                    if(this.getFilteredLogs.length == 0)
+                     return {
+                        paginationText: "",
+                        resultCount: "No results.",
+                    }
+
                     let start = this.pagination.currentPage + 1;
                     let end = (this.getFilteredLogs.length > this.pageSize) ? Math.round((this.getFilteredLogs.length / this.pageSize)) : "1"
-                    let timeText = "all time."
+                    let timeText = `all time (${this.processingTime}ms)`;
+
+
                     let response = {
                         paginationText: start + " of " + end,
                         resultCount: this.getRawLogs.length + " results from " + timeText,
@@ -368,7 +385,8 @@
                     this.searching = true;
 
                     let request = {
-                        query: this.query,
+                        Input: this.query,
+                        ComplexMode: this.searchMode,
                     }
 
                     let that = this;
@@ -377,12 +395,14 @@
                         url: '/home/search',
                         type: 'POST',
                         dataType: 'json',
-                        data: request,
+                        data: JSON.stringify(request),
+                        contentType: "application/json",
                         success: function(params) {
                             that.logs = params.logLines;
                             that.fields = params.uniqueFields;
-                            that.highlightedResults = request.query;
+                            that.highlightedResults = request.Input;
                             that.anomalies = params.anomalies;
+                            that.processingTime = params.processingTime;
                         },
                         error: function(params) {
                             console.log(params)

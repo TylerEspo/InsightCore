@@ -58,10 +58,13 @@ namespace InsightCore.Controllers
         /// <param name="query"></param>
         /// <returns>List of LogLines</returns>
         [HttpPost]
-        public IActionResult Search(string query)
+        public IActionResult Search([FromBody] SearchRequest request)
         {
             // create log search from raw query
-            LogSearch search = new LogSearch(query);
+            LogSearch search = new LogSearch(request.Input, request.ComplexMode);
+
+            Stopwatch timer = new Stopwatch();
+            timer.Start();
 
             // fetch search results from log engine
             SearchResult result = _logEngine.Search(search);
@@ -72,7 +75,7 @@ namespace InsightCore.Controllers
             {
                 foreach (var log in result.LogLines)
                 {
-                    var prediction = this._mlEngine.PredictAnomalyDetailed(log); // Assume a method that returns the full prediction result.
+                    var prediction = this._mlEngine.PredictAnomalyDetailed(log); 
 
                     if (prediction.Prediction)
                     {
@@ -81,6 +84,10 @@ namespace InsightCore.Controllers
                     }
                 }
             }
+
+            timer.Stop();
+
+            result.ProcessingTime = timer.ElapsedMilliseconds;
 
             return Json(result);
         }

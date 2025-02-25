@@ -10,5 +10,7 @@
         public List<string> UniqueFields { get; set; } = new List<string>();
 
         public List<LogLine> Anomalies { get; set; } = new List<LogLine>();
+
+        public long ProcessingTime { get; set; } = 0;
     }
 }

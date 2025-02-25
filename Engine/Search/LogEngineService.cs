@@ -82,8 +82,6 @@ namespace InsightCore.Engine.Search
         {
             SearchResult result = new SearchResult();
 
-            search.SearchType = SearchMode.Complex;
-
             if (string.IsNullOrEmpty(search.Query.Input))
                 return result;
 
@@ -95,7 +93,7 @@ namespace InsightCore.Engine.Search
 
             if (search.Index == SearchIndex.IIS)
             {
-                // query logs
+                // fetch all in-memory data where the log file is under IIS
                 var dataSet = GetResults.Where(x => x.Index == search.Index).ToList();
 
                 List<string> complexSearchItems = new List<string>();
@@ -103,42 +101,52 @@ namespace InsightCore.Engine.Search
                 // iterate log sources (files) that are in memory
                 foreach (var logFile in dataSet)
                 {
-
+                    // append unique fields found in log file
                     foreach (var field in logFile.Fields)
                     {
                         if (!result.UniqueFields.Any(x => x.Equals(field, StringComparison.InvariantCultureIgnoreCase)))
                             result.UniqueFields.Add(field);
                     }
 
-                    List<LogLine> wordDetected = new List<LogLine>();
+                    // log lines that matched param logic
+                    List<LogLine> logsFound = new List<LogLine>();
 
+                    // iterate through each log line within the current file
                     foreach (var logLine in logFile.LogLines)
                     {
                         // search for text
                         bool hasAllParams = false;
 
-                        // append additional field/value pairs from query string
-                        string[] queryStringParamDefinitions = logLine.QueryStringParams.Split('&');
-
                         // prep complex search w/ additional field values parsed from query string params
-                        if(search.SearchType == SearchMode.Complex)
+                        if(search.ComplexMode)
                         {
+                            // append additional field/value pairs from query string
+                            string[] queryStringParamDefinitions = logLine.QueryStringParams.Split('&');
+
+                            // process query string definitions if not empty
                             if (queryStringParamDefinitions.Length > 0)
                             {
+                                // iterate through all query string params 
+                                // i.e somedata=test&username=test
                                 foreach (string qsParam in queryStringParamDefinitions)
                                 {
+                                    // if the param is empty, ignore
                                     if (string.IsNullOrEmpty(qsParam))
                                         continue;
 
+                                    // split for field/value pair
                                     string[] qsDefinitions = qsParam.Split("=");
 
                                     if (qsDefinitions.Length > 1)
                                     {
+                                        // ignore if field or value is empty
                                         if (string.IsNullOrEmpty(qsDefinitions[0]) || string.IsNullOrEmpty(qsDefinitions[1]))
                                             continue;
 
+                                        // add field/value pair to log items for processing later 
                                         logLine.LogItems.Add(new LogItem(qsDefinitions[0], qsDefinitions[1]));
 
+                                        // add to complex search items to append to unique fields after
                                         if (!logFile.Fields.Contains(qsDefinitions[0]) && !complexSearchItems.Contains(qsDefinitions[0]))
                                             complexSearchItems.Add(qsDefinitions[0]);
                                     }
@@ -179,27 +187,28 @@ namespace InsightCore.Engine.Search
 
                                 if (!containsKeyword)
                                     break;
-
-
-
                             }
+
+                            // end param iteration 
                         }
-
-
 
                         if (hasAllParams)
                         {
-                            wordDetected.Add(logLine);
+                            logsFound.Add(logLine);
                         }
+
+                        // end log line iteration
                     }
 
-                    if (wordDetected.Count > 0)
+                    // add found log lines to search result
+                    if (logsFound.Count > 0)
                     {
-                        result.LogLines.AddRange(wordDetected);
+                        result.LogLines.AddRange(logsFound);
                     }
                 }
             }
 
+            // post processing (key words)
             result.LogLines = this.ProcessKeywords(search, result.LogLines.AsQueryable()).ToList();
             return result;
         }

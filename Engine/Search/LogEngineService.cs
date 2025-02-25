@@ -1,4 +1,5 @@
 ﻿using InsightCore.Configuration;
+using InsightCore.Util;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -167,7 +168,9 @@ namespace InsightCore.Engine.Search
             if (string.IsNullOrEmpty(this.LogDirectory))
                 throw new ArgumentNullException("Log Directory not configured.");
 
-            string[] files = Directory.GetFiles(this.LogDirectory);
+            string[] files = Directory.GetFiles(this.LogDirectory)
+                .Where(file => Utility.LogExtensions.Contains(Path.GetExtension(file).ToLowerInvariant()))
+                .ToArray();
 
             if (files.Length == 0)
                 return;

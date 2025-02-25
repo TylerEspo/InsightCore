@@ -19,7 +19,7 @@
         /// <summary>
         /// Array of log fields defined within the log 
         /// </summary>
-        public string[] Fields { get; set; } = new string[0];
+        public List<string> Fields { get; set; } = new List<string>();
 
         /// <summary>
         /// List of log lines within the current log file.

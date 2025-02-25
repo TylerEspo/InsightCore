@@ -43,7 +43,7 @@ namespace InsightCore.Engine.Search
         {
             get
             {
-                var value = LogItems.FirstOrDefault(x => x.Field.Equals("sc-bytes", StringComparison.OrdinalIgnoreCase))?.Value;
+                string? value = LogItems.FirstOrDefault(x => x.Field.Equals("sc-bytes", StringComparison.OrdinalIgnoreCase))?.Value;
                 return float.TryParse(value, out float result) ? result : 0f;
             }
             set
@@ -53,5 +53,19 @@ namespace InsightCore.Engine.Search
         }
 
         public bool HasAnomaly { get; set; }
+
+        public string QueryStringParams
+        {
+            get
+            {
+                string? value = LogItems.FirstOrDefault(x => x.Field.Equals("cs-uri-query", StringComparison.OrdinalIgnoreCase))?.Value;
+
+                return value;
+            }
+            set
+            {
+                this.QueryStringParams = value;
+            }
+        }
     }
 }

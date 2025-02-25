@@ -2,6 +2,7 @@
 using InsightCore.Util;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Tensorflow;
 
 namespace InsightCore.Engine.Search
 {
@@ -84,6 +85,8 @@ namespace InsightCore.Engine.Search
         {
             SearchResult result = new SearchResult();
 
+            search.SearchType = SearchMode.Complex;
+
             if (string.IsNullOrEmpty(search.Query.Input))
                 return result;
 
@@ -98,9 +101,12 @@ namespace InsightCore.Engine.Search
                 // query logs
                 var dataSet = GetResults.Where(x => x.Index == search.Index).ToList();
 
+                List<string> complexSearchItems = new List<string>();
+
                 // iterate log sources (files) that are in memory
                 foreach (var logFile in dataSet)
                 {
+
                     foreach (var field in logFile.Fields)
                     {
                         if (!result.UniqueFields.Any(x => x.Equals(field, StringComparison.InvariantCultureIgnoreCase)))
@@ -113,19 +119,61 @@ namespace InsightCore.Engine.Search
                     {
                         // search for text
                         bool hasAllParams = false;
+
+                        // append additional field/value pairs from query string
+                        string[] queryStringParamDefinitions = logLine.QueryStringParams.Split('&');
+
+                        // prep complex search w/ additional field values parsed from query string params
+                        if(search.SearchType == SearchMode.Complex)
+                        {
+                            if (queryStringParamDefinitions.Length > 0)
+                            {
+                                foreach (string qsParam in queryStringParamDefinitions)
+                                {
+                                    if (string.IsNullOrEmpty(qsParam))
+                                        continue;
+
+                                    string[] qsDefinitions = qsParam.Split("=");
+
+                                    if (qsDefinitions.Length > 1)
+                                    {
+                                        if (string.IsNullOrEmpty(qsDefinitions[0]) || string.IsNullOrEmpty(qsDefinitions[1]))
+                                            continue;
+
+                                        logLine.LogItems.Add(new LogItem(qsDefinitions[0], qsDefinitions[1]));
+
+                                        if (!logFile.Fields.Contains(qsDefinitions[0]) && !complexSearchItems.Contains(qsDefinitions[0]))
+                                            complexSearchItems.Add(qsDefinitions[0]);
+                                    }
+                                }
+                            }
+
+                            foreach (var complexField in complexSearchItems)
+                            {
+                                if (!result.UniqueFields.Any(x => x.Equals(complexField, StringComparison.InvariantCultureIgnoreCase)))
+                                    result.UniqueFields.Add(complexField);
+                            }
+                        }
+
+                        // iterate all search params in query
+                        // ensure each param is met to return a search result
                         foreach (var param in searchParams)
                         {
-                            if (string.IsNullOrEmpty(param))
+                            if (string.IsNullOrEmpty(param) || param.StartsWith("index="))
                                 continue;
 
-                            bool isDefinition = param.Split('=').Length > 1;
+                            var strictDefinitions = param.Split('=');
+                            bool isStrictDefinition = strictDefinitions.Length > 1;
 
-                            if (isDefinition)
+                            if (isStrictDefinition)
                             {
-                                //todo: do
-                                continue;
-                                bool containsKeyword = logLine.Raw.Contains(param, StringComparison.OrdinalIgnoreCase);
-                                hasAllParams = containsKeyword;
+                                bool containsValue = logLine.LogItems.Any(x => x.Field.Equals(strictDefinitions[0], StringComparison.OrdinalIgnoreCase)
+                                              && x.Value.Equals(strictDefinitions[1], StringComparison.OrdinalIgnoreCase));
+                                hasAllParams = containsValue;
+
+                                if (!containsValue)
+                                    break;
+
                             }
                             else
                             {
@@ -135,8 +183,12 @@ namespace InsightCore.Engine.Search
                                 if (!containsKeyword)
                                     break;
 
+
+
                             }
                         }
+
+
 
                         if (hasAllParams)
                         {
@@ -150,11 +202,6 @@ namespace InsightCore.Engine.Search
                     }
                 }
             }
-
-            // - LogLines
-            // - Unique Fields
-            // - Fields, Values
-
 
             result.LogLines = this.ProcessKeywords(search, result.LogLines.AsQueryable()).ToList();
             return result;
@@ -186,44 +233,56 @@ namespace InsightCore.Engine.Search
         /// </summary>
         private void Parse()
         {
+            // (log) file iteration 
             foreach (FileInfo fileInfo in _logFiles)
             {
+                // continue if file is empty or doesn't exist
                 if (!fileInfo.Exists || fileInfo.Length == 0)
                     continue;
 
+                // create log file to be added to our parsed list of logs
                 LogFile logFile = new LogFile(fileInfo);
-                logFile.Index = SearchIndex.IIS;
+                logFile.Index = SearchIndex.IIS; // iis by default
+
+                // read file
                 using (StreamReader reader = new StreamReader(fileInfo.FullName))
                 {
                     string? line;
                     while ((line = reader?.ReadLine()) != null)
                     {
-                        // ignore comments unless fields
+                        // ignore comments unless field def
                         if (line.StartsWith(CommentChar))
                         {
-                            if (!line.StartsWith(FieldStart) || logFile.Fields.Length > 0)
+                            // ignore if its not the field start comment or if we already found fields in this file
+                            if (!line.StartsWith(FieldStart) || logFile.Fields.Count > 0)
                                 continue;
 
-                            logFile.Fields = line.Replace(FieldStart, string.Empty).Split(Delimiter);
+                            // we found the fields comment, lets set it as the format for this file 
+                            logFile.Fields = line.Replace(FieldStart, string.Empty).Split(Delimiter).ToList();
                             continue;
                         }
 
+                        // start of new log line
                         LogLine logLine = new LogLine();
-                        logLine.Raw = line;
+                        logLine.Raw = line; // assign with raw text
 
-                        // key/v pairs
-                        if (logFile.Fields.Length > 0)
+                        // we *should* have fields here if it was defined in the file header
+                        if (logFile.Fields.Count > 0)
                         {
+                            // storing timestamp to be parsed later
                             string tempTimestamp = string.Empty;
+
+                            // iterate through all values identified in the log line
                             string[] fieldValues = line.Split(Delimiter);
                             for (int i = 0; i < fieldValues.Length; i++)
                             {
-                                LogItem logItem = new LogItem();
-                                string? fieldName = i > logFile.Fields.Length ? string.Empty : logFile.Fields[i];
+                                string? fieldName = i > logFile.Fields.Count ? string.Empty : logFile.Fields[i];
                                 string fieldValue = fieldValues[i];
-                                logItem.Field = fieldName;
-                                logItem.Value = fieldValue;
 
+                                // create log item to store field name and value pair within the log line
+                                LogItem logItem = new LogItem(fieldName, fieldValue);
+
+                                // extract timestamp to parse later
                                 if (logFile.Fields[i].Equals("date"))
                                 {
                                     tempTimestamp += fieldValue + " ";
@@ -232,11 +291,11 @@ namespace InsightCore.Engine.Search
                                 {
                                     tempTimestamp += fieldValue;
                                 }
-
+                                // add log item (key value pair) to log line
                                 logLine.LogItems.Add(logItem);
                             }
 
-                            // Consider using DateTime.TryParse for safety, and adjust for user timezone if needed
+                            // Todo: Consider using DateTime.TryParse for safety, and adjust for user timezone if needed
                             if (DateTime.TryParse(tempTimestamp.Trim(), out DateTime parsedTime))
                             {
                                 logLine.TimeStamp = parsedTime;
@@ -247,10 +306,13 @@ namespace InsightCore.Engine.Search
                                 logLine.TimeStamp = DateTime.MinValue;
                             }
                         }
-
+                        
+                        // add log lines to log file
                         logFile.LogLines.Add(logLine);
                     }
                 }
+
+                // add to parsed log list
                 _parsedLogs.Add(logFile);
             }
         }

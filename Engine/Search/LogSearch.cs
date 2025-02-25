@@ -32,6 +32,8 @@
         /// </summary>
         public DateTime? End { get; set; }
 
+        public SearchMode SearchType { get; set; } = SearchMode.Normal;
+
         /// <summary>
         /// Selected index for search 
         /// </summary>

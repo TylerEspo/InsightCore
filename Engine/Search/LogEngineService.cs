@@ -118,7 +118,7 @@ namespace InsightCore.Engine.Search
                         bool hasAllParams = false;
 
                         // prep complex search w/ additional field values parsed from query string params
-                        if(search.ComplexMode)
+                        if (search.ComplexMode)
                         {
                             // append additional field/value pairs from query string
                             string[] queryStringParamDefinitions = logLine.QueryStringParams.Split('&');
@@ -221,15 +221,18 @@ namespace InsightCore.Engine.Search
             if (string.IsNullOrEmpty(this.LogDirectory))
                 throw new ArgumentNullException("Log Directory not configured.");
 
-            string[] files = Directory.GetFiles(this.LogDirectory)
+            List<string> files = Directory.GetFiles(this.LogDirectory)
                 .Where(file => Utility.LogExtensions.Contains(Path.GetExtension(file).ToLowerInvariant()))
-                .ToArray();
+                .ToList();
 
-            if (files.Length == 0)
+            if (files.Count == 0)
                 return;
 
             foreach (var file in files)
                 this._logFiles.Add(new FileInfo(file));
+
+            // reorder to process files so the latest content is displayed on the first page
+            this._logFiles = this._logFiles.OrderByDescending(x => x.LastWriteTimeUtc).ToList();
 
             this.Parse();
         }
@@ -312,7 +315,7 @@ namespace InsightCore.Engine.Search
                                 logLine.TimeStamp = DateTime.MinValue;
                             }
                         }
-                        
+
                         // add log lines to log file
                         logFile.LogLines.Add(logLine);
                     }

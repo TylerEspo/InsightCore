@@ -115,7 +115,7 @@
                     <button class="custom-button" @@click="search()" style="flex: 1; max-width: 100px; max-height: 40px;"><i class="fa-brands fa-searchengin"></i> Search</button>
                 </div>
 
-              
+
 
                 <div class="search-results-heading">
                     <span>{{getSearchResultsText.resultCount}}</span>
@@ -249,11 +249,11 @@
 
                 getSearchResultsText: function() {
 
-                    if(this.logs.length == 0 && !this.hasSearched)
-                     return {
-                        paginationText: "",
-                        resultCount: "Create your query and click 'Search' to begin.",
-                    }
+                    if (this.logs.length == 0 && !this.hasSearched)
+                        return {
+                            paginationText: "",
+                            resultCount: "Create your query and click 'Search' to begin.",
+                        }
 
                     let start = this.pagination.currentPage + 1;
                     let end = (this.getFilteredLogs.length > this.pageSize) ? Math.round((this.getFilteredLogs.length / this.pageSize)) : "1"
@@ -341,7 +341,6 @@
                 },
 
                 getHighlightedText(logText) {
-
                     if (!this.highlightedResults)
                         return logText;
 
@@ -352,18 +351,13 @@
                     } else {
                         queryString = queryString.trim();
                     }
-
                     if (!queryString) return logText;
 
                     const tokens = queryString.split(/\s+/).filter(token => token);
-
                     const terms = tokens.reduce((acc, token) => {
                         if (token.includes('=')) {
                             const [key, ...valueParts] = token.split('=');
-                            // Ignore tokens that start with "index="
-                            if (key.toLowerCase() === 'index') {
-                                return acc;
-                            }
+                            if (key.toLowerCase() === 'index') return acc;
                             const value = valueParts.join('=');
                             if (value) acc.push(value);
                         } else {
@@ -374,14 +368,18 @@
 
                     if (!terms.length) return logText;
 
+                    // This escape function will treat "*" specially:
+                    // Instead of replacing "*" with ".*", we replace it with a pattern that matches
+                    // any characters except for common terminators: whitespace, '=', '&', or '|'.
+                    function escapeTerm(term) {
+                        return term
+                            .split('*')
+                            .map(segment => segment.replace(/[.+?^${}()|[\]\\]/g, '\\$&'))
+                            .join('[^\\s=&|]*');
+                    }
 
-                    const escapedTerms = terms.map(term =>
-                        term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-                    );
-
-
+                    const escapedTerms = terms.map(escapeTerm);
                     const regex = new RegExp(`(${escapedTerms.join('|')})`, 'gi');
-
 
                     return logText.replace(regex, '<span class="highlighted">$1</span>');
                 },
@@ -417,6 +415,7 @@
                             console.log(params)
                         }
                     });
+
 
 
                     that.searching = false;

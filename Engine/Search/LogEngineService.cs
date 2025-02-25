@@ -61,6 +61,11 @@ namespace InsightCore.Engine.Search
         public string Exclude => "NOT";
 
         /// <summary>
+        /// Wildcard search param
+        /// </summary>
+        public string Wildcard => "*";
+
+        /// <summary>
         /// Location of W3C Logs
         /// </summary>
         public string LogDirectory
@@ -181,9 +186,20 @@ namespace InsightCore.Engine.Search
 
                             if (isStrictDefinition)
                             {
-                                bool containsValue = (isConditionalParam) ? !logLine.LogItems.Any(x => x.Field.Equals(strictDefinitions[0], StringComparison.OrdinalIgnoreCase) && x.Value.Equals(strictDefinitions[1], StringComparison.OrdinalIgnoreCase))
+                                bool containsValue;
+
+                                if (strictDefinitions[1].EndsWith(this.Wildcard))
+                                {
+                                    containsValue = (isConditionalParam) ? !logLine.LogItems.Any(x => x.Field.Equals(strictDefinitions[0], StringComparison.OrdinalIgnoreCase) && x.Value.Contains(strictDefinitions[1].Replace("*", ""), StringComparison.OrdinalIgnoreCase))
+                                    : logLine.LogItems.Any(x => x.Field.Equals(strictDefinitions[0], StringComparison.OrdinalIgnoreCase) && x.Value.Contains(strictDefinitions[1].Replace("*", ""), StringComparison.OrdinalIgnoreCase));
+                                }
+                                else
+                                {
+                                    containsValue = (isConditionalParam) ? !logLine.LogItems.Any(x => x.Field.Equals(strictDefinitions[0], StringComparison.OrdinalIgnoreCase) && x.Value.Equals(strictDefinitions[1], StringComparison.OrdinalIgnoreCase))
                                     : logLine.LogItems.Any(x => x.Field.Equals(strictDefinitions[0], StringComparison.OrdinalIgnoreCase) && x.Value.Equals(strictDefinitions[1], StringComparison.OrdinalIgnoreCase));
-                                
+                                }
+
+
                                 hasAllParams = containsValue;
 
                                 if (!containsValue)
@@ -191,11 +207,21 @@ namespace InsightCore.Engine.Search
                             }
                             else
                             {
-                                bool containsKeyword = (isConditionalParam) ? !logLine.Raw.Contains(param, StringComparison.OrdinalIgnoreCase) 
-                                    : logLine.Raw.Contains(param, StringComparison.OrdinalIgnoreCase);
-                                hasAllParams = containsKeyword;
 
-                                if (!containsKeyword)
+                                string cleanParam = param;
+
+                                // loose searches already are wildcarded (log-> contains -> word)
+                                if (param.EndsWith(this.Wildcard))
+                                {
+                                    cleanParam = param.Replace("*", "");
+                                }
+
+                                bool containsWord = (isConditionalParam) ? !logLine.Raw.Contains(cleanParam, StringComparison.OrdinalIgnoreCase)
+                                    : logLine.Raw.Contains(cleanParam, StringComparison.OrdinalIgnoreCase);
+                                
+                                hasAllParams = containsWord;
+
+                                if (!containsWord)
                                     break;
                             }
 

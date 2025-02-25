@@ -55,6 +55,11 @@ InsightCore includes a query language for log analysis. Some examples:
     ```
     index=iis /app/login username=hello*rld
     ```
+  - The wildcard character `*` can be used at the start, end, or both to match patterns flexibly.
+    ```
+    index=iis LookupUser=steven*  
+    index=iis LookupUser=*-test1  
+    ```
 
 ## Contributing
 Contributions are welcome! Feel free to submit issues, feature requests, or pull requests.

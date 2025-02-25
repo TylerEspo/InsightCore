@@ -231,6 +231,7 @@
                 },
                 pageSize: 100,
                 hasSearched: false,
+                totalLinesSearched: 0,
             },
 
             computed: {
@@ -258,10 +259,11 @@
                     let start = this.pagination.currentPage + 1;
                     let end = (this.getFilteredLogs.length > this.pageSize) ? Math.round((this.getFilteredLogs.length / this.pageSize)) : "1"
                     let timeText = `all time (${this.processingTime}ms).`;
+                    let searchedLogs = this.totalLinesSearched;
 
                     let response = {
                         paginationText: start + " of " + end,
-                        resultCount: this.getRawLogs.length + " results from " + timeText,
+                        resultCount: `${this.getRawLogs.length} results of ${searchedLogs} lines from ${timeText}`,
                     }
 
                     return response;
@@ -410,6 +412,7 @@
                             that.highlightedResults = request.Input;
                             that.anomalies = params.anomalies;
                             that.processingTime = params.processingTime;
+                            that.totalLinesSearched = params.totalLinesSearched;
                         },
                         error: function(params) {
                             console.log(params)

@@ -188,16 +188,18 @@ namespace InsightCore.Engine.Search
                             {
                                 bool containsValue;
 
-                                if (strictDefinitions[1].EndsWith(this.Wildcard))
-                                {
-                                    containsValue = (isConditionalParam) ? !logLine.LogItems.Any(x => x.Field.Equals(strictDefinitions[0], StringComparison.OrdinalIgnoreCase) && x.Value.Contains(strictDefinitions[1].Replace("*", ""), StringComparison.OrdinalIgnoreCase))
-                                    : logLine.LogItems.Any(x => x.Field.Equals(strictDefinitions[0], StringComparison.OrdinalIgnoreCase) && x.Value.Contains(strictDefinitions[1].Replace("*", ""), StringComparison.OrdinalIgnoreCase));
-                                }
-                                else
-                                {
-                                    containsValue = (isConditionalParam) ? !logLine.LogItems.Any(x => x.Field.Equals(strictDefinitions[0], StringComparison.OrdinalIgnoreCase) && x.Value.Equals(strictDefinitions[1], StringComparison.OrdinalIgnoreCase))
-                                    : logLine.LogItems.Any(x => x.Field.Equals(strictDefinitions[0], StringComparison.OrdinalIgnoreCase) && x.Value.Equals(strictDefinitions[1], StringComparison.OrdinalIgnoreCase));
-                                }
+                                string searchPattern = strictDefinitions[1].Replace("*", ""); // Remove wildcard for base search
+                                bool startsWithWildcard = strictDefinitions[1].StartsWith(this.Wildcard);
+                                bool endsWithWildcard = strictDefinitions[1].EndsWith(this.Wildcard);
+
+                                containsValue = (isConditionalParam)
+                                    ? !logLine.LogItems.Any(x =>
+                                        x.Field.Equals(strictDefinitions[0], StringComparison.OrdinalIgnoreCase) &&
+                                        Utility.MatchWildcard(x.Value, searchPattern, startsWithWildcard, endsWithWildcard))
+                                    : logLine.LogItems.Any(x =>
+                                        x.Field.Equals(strictDefinitions[0], StringComparison.OrdinalIgnoreCase) &&
+                                        Utility.MatchWildcard(x.Value, searchPattern, startsWithWildcard, endsWithWildcard));
+
 
 
                                 hasAllParams = containsValue;
@@ -236,6 +238,7 @@ namespace InsightCore.Engine.Search
                             logsFound.Add(logLine);
                         }
 
+                        result.TotalLinesSearched++;
                         // end log line iteration
                     }
 
@@ -244,6 +247,8 @@ namespace InsightCore.Engine.Search
                     {
                         result.LogLines.AddRange(logsFound);
                     }
+
+
                 }
             }
 
@@ -290,7 +295,7 @@ namespace InsightCore.Engine.Search
 
                 // create log file to be added to our parsed list of logs
                 LogFile logFile = new LogFile(fileInfo);
-                logFile.Index = SearchIndex.IIS; // iis by default
+                logFile.Index = SearchIndex.IIS; // temp iis by default
                 logFile.Hash = Utility.ComputeFileHash(fileInfo.FullName);
 
                 // read file

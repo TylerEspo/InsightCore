@@ -41,5 +41,18 @@ namespace InsightCore.Util
                 return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
             }
         }
+
+
+        public static bool MatchWildcard(string fieldValue, string pattern, bool startsWith, bool endsWith)
+        {
+            if (startsWith && endsWith)
+                return fieldValue.Contains(pattern, StringComparison.OrdinalIgnoreCase);
+            if (startsWith)
+                return fieldValue.EndsWith(pattern, StringComparison.OrdinalIgnoreCase);
+            if (endsWith)
+                return fieldValue.StartsWith(pattern, StringComparison.OrdinalIgnoreCase);
+
+            return fieldValue.Equals(pattern, StringComparison.OrdinalIgnoreCase);
+        }
     }
 }

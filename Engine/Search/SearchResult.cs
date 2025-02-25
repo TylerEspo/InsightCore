@@ -11,6 +11,8 @@
 
         public List<LogLine> Anomalies { get; set; } = new List<LogLine>();
 
-        public long ProcessingTime { get; set; } = 0;
+        public long ProcessingTime { get; set; }
+
+        public int TotalLinesSearched { get; set; }
     }
 }

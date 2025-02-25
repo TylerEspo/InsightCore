@@ -38,6 +38,9 @@
         /// </summary>
         public DateTime? End { get; set; }
 
+        /// <summary>
+        /// Complex Search Mode enables advanced query parsing, extracting additional fields from parameters for more precise filtering and insights.
+        /// </summary>
         public bool ComplexMode { get; set; } = false;
 
         /// <summary>

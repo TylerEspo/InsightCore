@@ -6,7 +6,6 @@
   <img src="https://i.gyazo.com/ff087c83ba3b1326bd37ce595f2174fa.png" width="33%" />
 </p>
 
-
 ## Overview
 InsightCore is an open-source ASP.NET Core MVC application designed for **W3C log analysis, anomaly detection, and real-time monitoring**. Built on **.NET 8**, it leverages **ML.NET** for detecting anomalies in logs and health metrics, providing valuable insights into server performance, security, and operational health.
 
@@ -23,11 +22,6 @@ With an intuitive web-based UI, InsightCore allows developers and administrators
   ```
 - **Interactive Dashboard:** Gain insights from **visualized metrics, error trends, and server health indicators**.
 - **Extensible & Open Source:** Designed to be customized and integrated into any .NET environment.
-
-## Getting Started
-### Prerequisites
-- .NET 8 SDK
-- IIS with W3C logging enabled
 
 ## Query Language
 InsightCore includes a query language for log analysis. Some examples:
@@ -51,6 +45,17 @@ InsightCore includes a query language for log analysis. Some examples:
   ```
   index=iis cs-uri-stem=/app/v1/ping NOT cs-username=myusername  NOT testing
   ```
+
+## Keywords & Wildcards
+- **Keywords:** Keywords are part of result post-processing, giving the user the ability to take a certain number of records or re-order the results by ascending/descending order. **Note:** Order matters.
+  - `| take <num> |` - Takes a specified number of results.
+  - `| order <asc/desc> |` - Orders results based on log timestamp.
+- **Wildcards:** When using strictly defined fields and values, you can insert the `*` character to locate a pattern or value.
+  - Example:
+    ```
+    index=iis /app/login username=hello*rld
+    ```
+
 ## Contributing
 Contributions are welcome! Feel free to submit issues, feature requests, or pull requests.
 

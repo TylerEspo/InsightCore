@@ -47,6 +47,10 @@ InsightCore includes a query language for log analysis. Some examples:
   ```
   index=iis cs-uri-stem=/app/v1/ping cs-username=myusername 
   ```
+- **Conditional Statements**
+  ```
+  index=iis cs-uri-stem=/app/v1/ping NOT cs-username=myusername  NOT testing
+  ```
 ## Contributing
 Contributions are welcome! Feel free to submit issues, feature requests, or pull requests.
 

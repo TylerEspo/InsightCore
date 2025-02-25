@@ -96,10 +96,6 @@
 
             <!-- Search -->
             <div v-else-if="navigation.activeItem == 1" class="search-container">
-                <div class="search-param">
-                    <textarea spellcheck="false" v-model="query" type="text" style="flex: 1; min-height: 40px; height: 40px; " @@keydown="onSearchKeyDown"></textarea>
-                    <button class="custom-button" @@click="search()" style="flex: 1; max-width: 100px; max-height: 40px;"><i class="fa-brands fa-searchengin"></i> Search</button>
-                </div>
 
                 <div style="padding-top: 5px; padding-bottom: 10px;">
                     <div class="form-check form-switch">
@@ -113,6 +109,13 @@
 
                     </div>
                 </div>
+
+                <div class="search-param">
+                    <textarea spellcheck="false" v-model="query" type="text" style="flex: 1; min-height: 40px; height: 40px; " @@keydown="onSearchKeyDown"></textarea>
+                    <button class="custom-button" @@click="search()" style="flex: 1; max-width: 100px; max-height: 40px;"><i class="fa-brands fa-searchengin"></i> Search</button>
+                </div>
+
+              
 
                 <div class="search-results-heading">
                     <span>{{getSearchResultsText.resultCount}}</span>
@@ -253,7 +256,7 @@
 
                     let start = this.pagination.currentPage + 1;
                     let end = (this.getFilteredLogs.length > this.pageSize) ? Math.round((this.getFilteredLogs.length / this.pageSize)) : "1"
-                    let timeText = `all time (${this.processingTime}ms)`;
+                    let timeText = `all time (${this.processingTime}ms).`;
 
 
                     let response = {

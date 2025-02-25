@@ -1,8 +1,5 @@
 ﻿using InsightCore.Configuration;
 using InsightCore.Util;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using Tensorflow;
 
 namespace InsightCore.Engine.Search
 {

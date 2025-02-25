@@ -104,7 +104,13 @@
                 <div style="padding-top: 5px; padding-bottom: 10px;">
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="searchMode" v-model="searchMode">
-                        <label style="font-size: 14px" class="form-check-label" for="searchMode"><i style="color: #fb6239" class="fa-solid fa-circle-nodes"></i> Complex Search Mode</label>
+                        <vue-custom-tooltip class="custom-tooltip"
+                                            label="Complex Search Mode extracts additional fields within a log for more precise filtering but may increase processing time."
+                                            size="is-large"
+                                            :multiline=true>
+                            <label style="font-size: 14px" class="form-check-label" for="searchMode"><i style="color: #fb6239" class="fa-solid fa-circle-nodes"></i> Complex Search Mode</label>
+                        </vue-custom-tooltip>
+
                     </div>
                 </div>
 

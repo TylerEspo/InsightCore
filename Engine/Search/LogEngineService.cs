@@ -56,7 +56,7 @@ namespace InsightCore.Engine.Search
         public char Delimiter => ' ';
 
         /// <summary>
-        /// Exclude search keyword
+        /// Exclude search param
         /// </summary>
         public string Exclude => "NOT";
 
@@ -162,32 +162,45 @@ namespace InsightCore.Engine.Search
 
                         // iterate all search params in query
                         // ensure each param is met to return a search result
+                        // check if param is conditional too
+                        bool isConditionalParam = false;
                         foreach (var param in searchParams)
                         {
                             if (string.IsNullOrEmpty(param) || param.StartsWith("index="))
                                 continue;
+
+                            // conditional statement (i.e NOT)
+                            if (param.Equals(this.Exclude))
+                            {
+                                isConditionalParam = true; // next statement will exclude keyword or definition
+                                continue;
+                            }
 
                             var strictDefinitions = param.Split('=');
                             bool isStrictDefinition = strictDefinitions.Length > 1;
 
                             if (isStrictDefinition)
                             {
-                                bool containsValue = logLine.LogItems.Any(x => x.Field.Equals(strictDefinitions[0], StringComparison.OrdinalIgnoreCase)
-                                              && x.Value.Equals(strictDefinitions[1], StringComparison.OrdinalIgnoreCase));
+                                bool containsValue = (isConditionalParam) ? !logLine.LogItems.Any(x => x.Field.Equals(strictDefinitions[0], StringComparison.OrdinalIgnoreCase) && x.Value.Equals(strictDefinitions[1], StringComparison.OrdinalIgnoreCase))
+                                    : logLine.LogItems.Any(x => x.Field.Equals(strictDefinitions[0], StringComparison.OrdinalIgnoreCase) && x.Value.Equals(strictDefinitions[1], StringComparison.OrdinalIgnoreCase));
+                                
                                 hasAllParams = containsValue;
 
                                 if (!containsValue)
                                     break;
-
                             }
                             else
                             {
-                                bool containsKeyword = logLine.Raw.Contains(param, StringComparison.OrdinalIgnoreCase);
+                                bool containsKeyword = (isConditionalParam) ? !logLine.Raw.Contains(param, StringComparison.OrdinalIgnoreCase) 
+                                    : logLine.Raw.Contains(param, StringComparison.OrdinalIgnoreCase);
                                 hasAllParams = containsKeyword;
 
                                 if (!containsKeyword)
                                     break;
                             }
+
+                            // set conditional check
+                            isConditionalParam = false;
 
                             // end param iteration 
                         }
@@ -252,6 +265,7 @@ namespace InsightCore.Engine.Search
                 // create log file to be added to our parsed list of logs
                 LogFile logFile = new LogFile(fileInfo);
                 logFile.Index = SearchIndex.IIS; // iis by default
+                logFile.Hash = Utility.ComputeFileHash(fileInfo.FullName);
 
                 // read file
                 using (StreamReader reader = new StreamReader(fileInfo.FullName))

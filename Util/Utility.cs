@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using System.Reflection;
+using System.Security.Cryptography;
 
 namespace InsightCore.Util
 {
@@ -26,5 +27,19 @@ namespace InsightCore.Util
             };
 
 
+        /// <summary>
+        /// Compute hash for file monitoring
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
+        public static string ComputeFileHash(string filePath)
+        {
+            using (var sha1 = SHA1.Create()) // Use SHA256.Create() for a stronger hash
+            using (var stream = new BufferedStream(File.OpenRead(filePath), 1024 * 32)) // 32KB buffer
+            {
+                byte[] hash = sha1.ComputeHash(stream);
+                return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+            }
+        }
     }
 }

@@ -6,7 +6,7 @@
         /// Log File in W3C standards. Uses FileInfo for extensive file information.
         /// </summary>
         /// <param name="fileInfo"></param>
-        public LogFile(FileInfo fileInfo)
+        public LogFile(FileInfo? fileInfo)
         {
             this.FileInfo = fileInfo;
         }
@@ -30,6 +30,11 @@
         /// Index in which the log exists in.
         /// </summary>
         public SearchIndex Index { get; set; }
+
+        /// <summary>
+        /// Byte hash of file
+        /// </summary>
+        public string? Hash { get; set; }
 
     }
 

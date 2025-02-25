@@ -230,6 +230,7 @@
                     stats: null,
                 },
                 pageSize: 100,
+                hasSearched: false,
             },
 
             computed: {
@@ -248,16 +249,15 @@
 
                 getSearchResultsText: function() {
 
-                    if(this.getFilteredLogs.length == 0)
+                    if(this.logs.length == 0 && !this.hasSearched)
                      return {
                         paginationText: "",
-                        resultCount: "No results.",
+                        resultCount: "Create your query and click 'Search' to begin.",
                     }
 
                     let start = this.pagination.currentPage + 1;
                     let end = (this.getFilteredLogs.length > this.pageSize) ? Math.round((this.getFilteredLogs.length / this.pageSize)) : "1"
                     let timeText = `all time (${this.processingTime}ms).`;
-
 
                     let response = {
                         paginationText: start + " of " + end,
@@ -420,7 +420,7 @@
 
 
                     that.searching = false;
-
+                    that.hasSearched = true;
                 },
 
                 getNavigationClass: function(index) {

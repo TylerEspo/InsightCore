@@ -14,5 +14,7 @@
         public long ProcessingTime { get; set; }
 
         public int TotalLinesSearched { get; set; }
+
+        public int TotalFilesProcessed { get; set; }
     }
 }

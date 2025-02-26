@@ -30,6 +30,11 @@ html, body {
     font-optical-sizing: auto;
 }
 
+#modal-stats a {
+    text-decoration: underline;
+    color: rgb(251, 98, 58)
+}
+
 a {
     text-decoration: none;
 }

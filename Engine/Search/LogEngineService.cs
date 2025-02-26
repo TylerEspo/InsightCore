@@ -101,8 +101,6 @@ namespace InsightCore.Engine.Search
                 // fetch all in-memory data where the log file is under IIS
                 var dataSet = GetResults.Where(x => x.Index == search.Index).ToList();
 
-                List<string> additionalFields = new List<string>();
-
                 // iterate log sources (files) that are in memory
                 foreach (var logFile in dataSet)
                 {
@@ -150,18 +148,8 @@ namespace InsightCore.Engine.Search
 
                                         // add field/value pair to log items for processing later 
                                         logLine.LogItems.Add(new LogItem(qsDefinitions[0], qsDefinitions[1]));
-
-                                        // add to complex search items to append to unique fields after
-                                        if (!logFile.Fields.Contains(qsDefinitions[0]) && !additionalFields.Contains(qsDefinitions[0]))
-                                            additionalFields.Add(qsDefinitions[0]);
                                     }
                                 }
-                            }
-
-                            foreach (var newField in additionalFields)
-                            {
-                                if (!result.UniqueFields.Any(x => x.Contains(newField)))
-                                    result.UniqueFields.Add(newField);
                             }
                         }
 
@@ -200,8 +188,6 @@ namespace InsightCore.Engine.Search
                                         x.Field.Equals(strictDefinitions[0], StringComparison.OrdinalIgnoreCase) &&
                                         Utility.MatchWildcard(x.Value, searchPattern, startsWithWildcard, endsWithWildcard));
 
-
-
                                 hasAllParams = containsValue;
 
                                 if (!containsValue)
@@ -235,10 +221,20 @@ namespace InsightCore.Engine.Search
 
                         if (hasAllParams)
                         {
+                            // add to additional fields if found
+                            foreach (var logItem in logLine.LogItems)
+                            {
+                                if (!result.UniqueFields.Contains(logItem.Field))
+                                {
+                                    result.UniqueFields.Add(logItem.Field);
+                                }
+                            }
+
                             logsFound.Add(logLine);
                         }
 
                         result.TotalLinesSearched++;
+
                         // end log line iteration
                     }
 
@@ -248,7 +244,9 @@ namespace InsightCore.Engine.Search
                         result.LogLines.AddRange(logsFound);
                     }
 
+                    result.TotalFilesProcessed++;
 
+                    // end file processing
                 }
             }
 
@@ -409,7 +407,6 @@ namespace InsightCore.Engine.Search
                     continue;
                 }
             }
-
             return results;
         }
     }

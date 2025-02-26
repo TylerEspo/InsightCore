@@ -26,7 +26,7 @@
                             </thead>
                             <tbody>
                                 <tr v-for="(stat, index) in statsModal.stats">
-                                    <td>{{trim(32, stat.value)}}</td>
+                                    <td><a @@click="query += ` ${statsModal.field}=${stat.value}`" style="cursor: pointer; ">{{stat.value}}</a></td>
                                     <td>{{stat.count}}</td>
                                     <td>{{stat.percentage}}</td>
                                 </tr>
@@ -232,6 +232,7 @@
                 pageSize: 100,
                 hasSearched: false,
                 totalLinesSearched: 0,
+                totalFilesProcessed: 0,
             },
 
             computed: {
@@ -249,25 +250,29 @@
                 },
 
                 getSearchResultsText: function() {
-
                     if (this.logs.length == 0 && !this.hasSearched)
                         return {
                             paginationText: "",
                             resultCount: "Create your query and click 'Search' to begin.",
-                        }
+                        };
 
                     let start = this.pagination.currentPage + 1;
-                    let end = (this.getFilteredLogs.length > this.pageSize) ? Math.round((this.getFilteredLogs.length / this.pageSize)) : "1"
-                    let timeText = `all time (${this.processingTime}ms).`;
+                    let end = (this.getFilteredLogs.length > this.pageSize) ?
+                        Math.round((this.getFilteredLogs.length / this.pageSize)) :
+                        "1";
+
+                    let timeFrameText = this.searchTimeFrame || "all time"; // Placeholder for future filtering
+                    let timeText = `${timeFrameText} (${this.processingTime}ms).`;
                     let searchedLogs = this.totalLinesSearched;
 
                     let response = {
-                        paginationText: start + " of " + end,
-                        resultCount: `${this.getRawLogs.length} results of ${searchedLogs} lines from ${timeText}`,
-                    }
+                        paginationText: `${start} of ${end}`,
+                        resultCount: `${this.getRawLogs.length} matches found across ${searchedLogs} log lines (${this.totalFilesProcessed} files) from ${timeText}`,
+                    };
 
                     return response;
                 },
+
 
                 getPageName: function() {
                     return this.navigation.menuItems[this.navigation.activeItem].name ?? "Home"
@@ -413,6 +418,7 @@
                             that.anomalies = params.anomalies;
                             that.processingTime = params.processingTime;
                             that.totalLinesSearched = params.totalLinesSearched;
+                            that.totalFilesProcessed = params.totalFilesProcessed;
                         },
                         error: function(params) {
                             console.log(params)

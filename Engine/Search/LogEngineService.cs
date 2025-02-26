@@ -101,7 +101,7 @@ namespace InsightCore.Engine.Search
                 // fetch all in-memory data where the log file is under IIS
                 var dataSet = GetResults.Where(x => x.Index == search.Index).ToList();
 
-                List<string> complexSearchItems = new List<string>();
+                List<string> additionalFields = new List<string>();
 
                 // iterate log sources (files) that are in memory
                 foreach (var logFile in dataSet)
@@ -152,16 +152,16 @@ namespace InsightCore.Engine.Search
                                         logLine.LogItems.Add(new LogItem(qsDefinitions[0], qsDefinitions[1]));
 
                                         // add to complex search items to append to unique fields after
-                                        if (!logFile.Fields.Contains(qsDefinitions[0]) && !complexSearchItems.Contains(qsDefinitions[0]))
-                                            complexSearchItems.Add(qsDefinitions[0]);
+                                        if (!logFile.Fields.Contains(qsDefinitions[0]) && !additionalFields.Contains(qsDefinitions[0]))
+                                            additionalFields.Add(qsDefinitions[0]);
                                     }
                                 }
                             }
 
-                            foreach (var complexField in complexSearchItems)
+                            foreach (var newField in additionalFields)
                             {
-                                if (!result.UniqueFields.Any(x => x.Equals(complexField, StringComparison.InvariantCultureIgnoreCase)))
-                                    result.UniqueFields.Add(complexField);
+                                if (!result.UniqueFields.Any(x => x.Contains(newField)))
+                                    result.UniqueFields.Add(newField);
                             }
                         }
 
